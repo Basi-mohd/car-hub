@@ -267,7 +267,7 @@ export default function BookingCalendar() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Booking Calendar</h2>
-          <p className="text-muted-foreground">Schedule and manage car wash appointments</p>
+          <p className="text-muted-foreground">Schedule and manage Car Hub appointments</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>

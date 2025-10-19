@@ -240,7 +240,7 @@ export default function CustomerManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Customer Management</h2>
-          <p className="text-muted-foreground">Manage your car wash customers and their vehicles</p>
+          <p className="text-muted-foreground">Manage your Car Hub customers and their vehicles</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);

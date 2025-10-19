@@ -25,7 +25,7 @@ export default function Home() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  Car Wash Manager
+                  Car Hub Manager
                 </h1>
                 <p className="text-sm text-muted-foreground">Professional management system</p>
               </div>
