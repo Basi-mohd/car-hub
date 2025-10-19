@@ -6,9 +6,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { bookingService, customerService } from '@/lib/services';
-import { Booking, Customer } from '@/types';
-import { CalendarIcon, Clock, Plus, CreditCard, Wallet, Smartphone, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { bookingService, customerService, vehicleService } from '@/lib/services';
+import { Booking, Customer, Vehicle } from '@/types';
+import { CalendarIcon, Clock, Plus, CreditCard, Wallet, Smartphone, Loader2, UserPlus, Car } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
 
@@ -43,28 +44,53 @@ export default function BookingCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
+  const [isVehicleDialogOpen, setIsVehicleDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [customerSubmitting, setCustomerSubmitting] = useState(false);
+  const [vehicleSubmitting, setVehicleSubmitting] = useState(false);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
     customerId: '',
+    vehicleId: '',
     serviceType: '',
     timeSlot: '',
     paymentMethod: '',
+  });
+
+  const [customerFormData, setCustomerFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    vehicle_make: '',
+    vehicle_model: '',
+    vehicle_plate: '',
+  });
+
+  const [vehicleFormData, setVehicleFormData] = useState({
+    make: '',
+    model: '',
+    plate: '',
+    year: '',
+    color: '',
   });
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [bookingsData, customersData] = await Promise.all([
+        const [bookingsData, customersData, vehiclesData] = await Promise.all([
           bookingService.getAll(),
-          customerService.getAll()
+          customerService.getAll(),
+          vehicleService.getAll()
         ]);
         setBookings(bookingsData);
         setCustomers(customersData);
+        setVehicles(vehiclesData);
       } catch (error) {
         toast({
           title: 'Error',
@@ -87,16 +113,19 @@ export default function BookingCalendar() {
     e.preventDefault();
     
     const customer = customers.find(c => c.id === formData.customerId);
+    const vehicle = vehicles.find(v => v.id === formData.vehicleId);
     const service = SERVICE_TYPES.find(s => s.name === formData.serviceType);
     
-    if (!customer || !service) return;
+    if (!customer || !vehicle || !service) return;
 
     try {
       setSubmitting(true);
       
       await bookingService.create({
         customer_id: customer.id,
+        vehicle_id: vehicle.id,
         customer_name: customer.name,
+        vehicle_info: `${vehicle.make} ${vehicle.model} - ${vehicle.plate}`,
         service_type: service.name,
         date: selectedDate.toISOString(),
         time_slot: formData.timeSlot,
@@ -108,7 +137,7 @@ export default function BookingCalendar() {
       const updatedBookings = await bookingService.getAll();
       setBookings(updatedBookings);
       setIsDialogOpen(false);
-      setFormData({ customerId: '', serviceType: '', timeSlot: '', paymentMethod: '' });
+      setFormData({ customerId: '', vehicleId: '', serviceType: '', timeSlot: '', paymentMethod: '' });
       
       toast({
         title: 'Booking Created',
@@ -143,6 +172,96 @@ export default function BookingCalendar() {
     }
   };
 
+  const handleCustomerSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      setCustomerSubmitting(true);
+      
+      const newCustomer = await customerService.create(customerFormData);
+      setCustomers(prev => [newCustomer, ...prev]);
+      
+      if (customerFormData.vehicle_make && customerFormData.vehicle_model && customerFormData.vehicle_plate) {
+        const newVehicle = await vehicleService.create({
+          customer_id: newCustomer.id,
+          make: customerFormData.vehicle_make,
+          model: customerFormData.vehicle_model,
+          plate: customerFormData.vehicle_plate,
+        });
+        setVehicles(prev => [newVehicle, ...prev]);
+        setFormData(prev => ({ ...prev, customerId: newCustomer.id, vehicleId: newVehicle.id }));
+      } else {
+        setFormData(prev => ({ ...prev, customerId: newCustomer.id }));
+      }
+      
+      setIsCustomerDialogOpen(false);
+      setCustomerFormData({
+        name: '',
+        email: '',
+        phone: '',
+        vehicle_make: '',
+        vehicle_model: '',
+        vehicle_plate: '',
+      });
+      
+      toast({
+        title: 'Customer Added',
+        description: 'New customer has been added and selected.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to create customer',
+        variant: 'destructive',
+      });
+    } finally {
+      setCustomerSubmitting(false);
+    }
+  };
+
+  const handleVehicleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.customerId) return;
+
+    try {
+      setVehicleSubmitting(true);
+      
+      const newVehicle = await vehicleService.create({
+        customer_id: formData.customerId,
+        make: vehicleFormData.make,
+        model: vehicleFormData.model,
+        plate: vehicleFormData.plate,
+        year: vehicleFormData.year ? parseInt(vehicleFormData.year) : undefined,
+        color: vehicleFormData.color || undefined,
+      });
+      
+      setVehicles(prev => [newVehicle, ...prev]);
+      setFormData(prev => ({ ...prev, vehicleId: newVehicle.id }));
+      setIsVehicleDialogOpen(false);
+      setVehicleFormData({
+        make: '',
+        model: '',
+        plate: '',
+        year: '',
+        color: '',
+      });
+      
+      toast({
+        title: 'Vehicle Added',
+        description: 'New vehicle has been added and selected.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to create vehicle',
+        variant: 'destructive',
+      });
+    } finally {
+      setVehicleSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -167,7 +286,13 @@ export default function BookingCalendar() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label>Customer</Label>
-                <Select value={formData.customerId} onValueChange={(value) => setFormData({ ...formData, customerId: value })}>
+                <Select value={formData.customerId} onValueChange={(value) => {
+                  if (value === 'add-customer') {
+                    setIsCustomerDialogOpen(true);
+                  } else {
+                    setFormData({ ...formData, customerId: value });
+                  }
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select customer" />
                   </SelectTrigger>
@@ -177,9 +302,46 @@ export default function BookingCalendar() {
                         {customer.name} - {customer.vehicle_plate}
                       </SelectItem>
                     ))}
+                    <SelectItem value="add-customer" className="text-primary">
+                      <div className="flex items-center gap-2">
+                        <UserPlus className="h-4 w-4" />
+                        Add New Customer
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+              {formData.customerId && (
+                <div className="space-y-2">
+                  <Label>Vehicle</Label>
+                  <Select value={formData.vehicleId} onValueChange={(value) => {
+                    if (value === 'add-vehicle') {
+                      setIsVehicleDialogOpen(true);
+                    } else {
+                      setFormData({ ...formData, vehicleId: value });
+                    }
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select vehicle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {vehicles
+                        .filter(v => v.customer_id === formData.customerId)
+                        .map(vehicle => (
+                          <SelectItem key={vehicle.id} value={vehicle.id}>
+                            {vehicle.make} {vehicle.model} - {vehicle.plate}
+                          </SelectItem>
+                        ))}
+                      <SelectItem value="add-vehicle" className="text-primary">
+                        <div className="flex items-center gap-2">
+                          <Plus className="h-4 w-4" />
+                          Add New Vehicle
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>Service Type</Label>
                 <Select value={formData.serviceType} onValueChange={(value) => setFormData({ ...formData, serviceType: value })}>
@@ -297,7 +459,8 @@ export default function BookingCalendar() {
                         <div className="flex items-center gap-4">
                           <div className={`w-1 h-16 rounded-full ${STATUS_COLORS[booking.status]}`} />
                           <div>
-                            <div className="font-semibold">{booking.customer_name}</div>
+                            <div className="font-semibold">#{booking.booking_number} · {booking.customer_name}</div>
+                            <div className="text-sm text-muted-foreground">{booking.vehicle_info}</div>
                             <div className="text-sm text-muted-foreground">{booking.service_type}</div>
                             <div className="flex items-center gap-2 mt-1">
                               <Clock className="h-3 w-3" />
@@ -335,6 +498,148 @@ export default function BookingCalendar() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Add New Customer</DialogTitle>
+            <DialogDescription>
+              Create a new customer to add to your booking
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCustomerSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="customer-name">Full Name</Label>
+              <Input
+                id="customer-name"
+                value={customerFormData.name}
+                onChange={(e) => setCustomerFormData({ ...customerFormData, name: e.target.value })}
+                required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="customer-email">Email</Label>
+                <Input
+                  id="customer-email"
+                  type="email"
+                  value={customerFormData.email}
+                  onChange={(e) => setCustomerFormData({ ...customerFormData, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="customer-phone">Phone</Label>
+                <Input
+                  id="customer-phone"
+                  value={customerFormData.phone}
+                  onChange={(e) => setCustomerFormData({ ...customerFormData, phone: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Car className="h-4 w-4" />
+                Vehicle Information
+              </Label>
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  placeholder="Make (e.g., Toyota)"
+                  value={customerFormData.vehicle_make}
+                  onChange={(e) => setCustomerFormData({ ...customerFormData, vehicle_make: e.target.value })}
+                  required
+                />
+                <Input
+                  placeholder="Model (e.g., Camry)"
+                  value={customerFormData.vehicle_model}
+                  onChange={(e) => setCustomerFormData({ ...customerFormData, vehicle_model: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="customer-plate">License Plate</Label>
+              <Input
+                id="customer-plate"
+                value={customerFormData.vehicle_plate}
+                onChange={(e) => setCustomerFormData({ ...customerFormData, vehicle_plate: e.target.value.toUpperCase() })}
+                required
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={() => setIsCustomerDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={customerSubmitting}>
+                {customerSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Add Customer
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isVehicleDialogOpen} onOpenChange={setIsVehicleDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Add New Vehicle</DialogTitle>
+            <DialogDescription>
+              Add a new vehicle for the selected customer
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleVehicleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Car className="h-4 w-4" />
+                Vehicle Information
+              </Label>
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  placeholder="Make (e.g., Toyota)"
+                  value={vehicleFormData.make}
+                  onChange={(e) => setVehicleFormData({ ...vehicleFormData, make: e.target.value })}
+                  required
+                />
+                <Input
+                  placeholder="Model (e.g., Camry)"
+                  value={vehicleFormData.model}
+                  onChange={(e) => setVehicleFormData({ ...vehicleFormData, model: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <Input
+                  placeholder="License Plate"
+                  value={vehicleFormData.plate}
+                  onChange={(e) => setVehicleFormData({ ...vehicleFormData, plate: e.target.value.toUpperCase() })}
+                  required
+                />
+                <Input
+                  placeholder="Year (optional)"
+                  type="number"
+                  value={vehicleFormData.year}
+                  onChange={(e) => setVehicleFormData({ ...vehicleFormData, year: e.target.value })}
+                />
+                <Input
+                  placeholder="Color (optional)"
+                  value={vehicleFormData.color}
+                  onChange={(e) => setVehicleFormData({ ...vehicleFormData, color: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={() => setIsVehicleDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={vehicleSubmitting}>
+                {vehicleSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Add Vehicle
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

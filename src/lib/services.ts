@@ -1,4 +1,4 @@
-import { Customer, Booking } from '@/types';
+import { Customer, Vehicle, Booking } from '@/types';
 import { supabase } from './supabase';
 
 export const customerService = {
@@ -63,6 +63,79 @@ export const customerService = {
   },
 };
 
+export const vehicleService = {
+  getAll: async (): Promise<Vehicle[]> => {
+    const { data, error } = await supabase
+      .from('vehicles')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  },
+  
+  getByCustomerId: async (customerId: string): Promise<Vehicle[]> => {
+    const { data, error } = await supabase
+      .from('vehicles')
+      .select('*')
+      .eq('customer_id', customerId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  },
+  
+  getById: async (id: string): Promise<Vehicle | undefined> => {
+    const { data, error } = await supabase
+      .from('vehicles')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return undefined;
+      throw error;
+    }
+    return data;
+  },
+  
+  create: async (vehicle: Omit<Vehicle, 'id' | 'created_at'>): Promise<Vehicle> => {
+    const { data, error } = await supabase
+      .from('vehicles')
+      .insert([vehicle])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  update: async (id: string, updates: Partial<Vehicle>): Promise<Vehicle | undefined> => {
+    const { data, error } = await supabase
+      .from('vehicles')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return undefined;
+      throw error;
+    }
+    return data;
+  },
+  
+  delete: async (id: string): Promise<boolean> => {
+    const { error } = await supabase
+      .from('vehicles')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    return true;
+  },
+};
+
 export const bookingService = {
   getAll: async (): Promise<Booking[]> => {
     const { data, error } = await supabase
@@ -105,7 +178,7 @@ export const bookingService = {
     return data || [];
   },
   
-  create: async (booking: Omit<Booking, 'id'>): Promise<Booking> => {
+  create: async (booking: Omit<Booking, 'id' | 'booking_number'>): Promise<Booking> => {
     const { data, error } = await supabase
       .from('bookings')
       .insert([booking])

@@ -3,16 +3,27 @@ export interface Customer {
   name: string;
   email: string;
   phone: string;
-  vehicle_make: string;
-  vehicle_model: string;
-  vehicle_plate: string;
+  created_at: string;
+}
+
+export interface Vehicle {
+  id: string;
+  customer_id: string;
+  make: string;
+  model: string;
+  plate: string;
+  year?: number;
+  color?: string;
   created_at: string;
 }
 
 export interface Booking {
   id: string;
+  booking_number: number;
   customer_id: string;
+  vehicle_id: string;
   customer_name: string;
+  vehicle_info: string;
   service_type: string;
   date: string;
   time_slot: string;
