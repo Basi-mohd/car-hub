@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { bookingService } from '@/lib/services';
-import { Calendar, DollarSign, TrendingUp, Users, Clock, Loader2 } from 'lucide-react';
+import { Calendar, IndianRupee, TrendingUp, Users, Clock, Loader2 } from 'lucide-react';
 import { format, eachDayOfInterval, subDays, isSameDay, startOfMonth, endOfMonth } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -123,10 +123,10 @@ export default function Dashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Daily Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${summary?.revenue || 0}</div>
+            <div className="text-2xl font-bold">₹{summary?.revenue || 0}</div>
             <p className="text-xs text-muted-foreground">
               From {paidCount} paid service{paidCount !== 1 ? 's' : ''}
             </p>
@@ -152,7 +152,7 @@ export default function Dashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue}</div>
+            <div className="text-2xl font-bold">₹{totalRevenue}</div>
             <p className="text-xs text-muted-foreground">All time earnings</p>
           </CardContent>
         </Card>
@@ -170,10 +170,10 @@ export default function Dashboard() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Today Revenue</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <IndianRupee className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">${todayRevenue}</div>
+                  <div className="text-2xl font-bold">₹{todayRevenue}</div>
                   <p className="text-xs text-muted-foreground">
                     From paid bookings today
                   </p>
@@ -186,7 +186,7 @@ export default function Dashboard() {
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">${monthlyRevenue}</div>
+                  <div className="text-2xl font-bold">₹{monthlyRevenue}</div>
                   <p className="text-xs text-muted-foreground">
                     {monthlyCount} paid bookings this month
                   </p>
@@ -196,10 +196,10 @@ export default function Dashboard() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <IndianRupee className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">${totalRevenue}</div>
+                  <div className="text-2xl font-bold">₹{totalRevenue}</div>
                   <p className="text-xs text-muted-foreground">
                     All time earnings
                   </p>
@@ -232,7 +232,7 @@ export default function Dashboard() {
                       <div
                         className="w-full bg-blue-600 rounded-t"
                         style={{ height: `${Math.max(4, Math.round((p.value / maxSeriesValue) * 100))}%` }}
-                        title={`$${p.value} on ${format(p.date, 'MM/dd')}`}
+                        title={`₹${p.value} on ${format(p.date, 'MM/dd')}`}
                       />
                       <div className="text-[10px] text-muted-foreground">{format(p.date, 'd')}</div>
                     </div>
@@ -275,7 +275,7 @@ export default function Dashboard() {
                               <span className="text-muted-foreground text-xs">N/A</span>
                             )}
                           </TableCell>
-                          <TableCell className="text-right">${p.price}</TableCell>
+                          <TableCell className="text-right">₹{p.price}</TableCell>
                         </TableRow>
                       ))
                     )}
@@ -353,7 +353,7 @@ export default function Dashboard() {
                         </div>
                         <div className="text-right">
                           <div className="font-semibold">{booking.time_slot}</div>
-                          <div className="text-sm text-muted-foreground">${booking.price}</div>
+                          <div className="text-sm text-muted-foreground">₹{booking.price}</div>
                         </div>
                       </div>
                     ))}

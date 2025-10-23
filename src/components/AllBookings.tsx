@@ -206,7 +206,7 @@ export default function AllBookings() {
                       <TableCell>
                         <Badge variant="outline">{b.status}</Badge>
                       </TableCell>
-                      <TableCell className="text-right">${b.price}</TableCell>
+                      <TableCell className="text-right">₹{b.price}</TableCell>
                     </TableRow>
                   ))
                 )}

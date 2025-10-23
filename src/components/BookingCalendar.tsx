@@ -351,7 +351,7 @@ export default function BookingCalendar() {
                   <SelectContent>
                     {SERVICE_TYPES.map(service => (
                       <SelectItem key={service.name} value={service.name}>
-                        {service.name} - ${service.price}
+                        {service.name} - ₹{service.price}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -465,7 +465,7 @@ export default function BookingCalendar() {
                             <div className="flex items-center gap-2 mt-1">
                               <Clock className="h-3 w-3" />
                               <span className="text-sm">{booking.time_slot}</span>
-                              <span className="text-sm font-medium">${booking.price}</span>
+                              <span className="text-sm font-medium">₹{booking.price}</span>
                               {booking.payment_method && (
                                 <Badge variant="outline" className="text-xs">
                                   {booking.payment_method.replace('-', ' ')}

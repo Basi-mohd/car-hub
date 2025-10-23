@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { bookingService } from '@/lib/services';
 import { Booking } from '@/types';
-import { CreditCard, Wallet, Smartphone, DollarSign, CheckCircle2 } from 'lucide-react';
+import { CreditCard, Wallet, Smartphone, IndianRupee, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 const PAYMENT_METHODS = [
@@ -42,7 +42,7 @@ export default function PaymentProcessing() {
 
     toast({
       title: 'Payment Processed',
-      description: `Payment of $${selectedBooking.price} received via ${PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label}`,
+      description: `Payment of ₹${selectedBooking.price} received via ${PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label}`,
     });
   };
 
@@ -62,12 +62,12 @@ export default function PaymentProcessing() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{pendingPayments.length}</div>
             <p className="text-xs text-muted-foreground">
-              ${pendingPayments.reduce((sum, b) => sum + b.price, 0)} total
+              ₹{pendingPayments.reduce((sum, b) => sum + b.price, 0)} total
             </p>
           </CardContent>
         </Card>
@@ -80,7 +80,7 @@ export default function PaymentProcessing() {
           <CardContent>
             <div className="text-2xl font-bold">{paidBookings.length}</div>
             <p className="text-xs text-muted-foreground">
-              ${paidBookings.reduce((sum, b) => sum + b.price, 0)} received
+              ₹{paidBookings.reduce((sum, b) => sum + b.price, 0)} received
             </p>
           </CardContent>
         </Card>
@@ -92,7 +92,7 @@ export default function PaymentProcessing() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${bookings.filter(b => b.status === 'paid').reduce((sum, b) => sum + b.price, 0)}
+              ₹{bookings.filter(b => b.status === 'paid').reduce((sum, b) => sum + b.price, 0)}
             </div>
             <p className="text-xs text-muted-foreground">All time</p>
           </CardContent>
@@ -133,7 +133,7 @@ export default function PaymentProcessing() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="font-semibold text-lg">${booking.price}</span>
+                      <span className="font-semibold text-lg">₹{booking.price}</span>
                     </TableCell>
                     <TableCell className="text-right">
                       <Button onClick={() => openPaymentDialog(booking)}>
@@ -166,7 +166,7 @@ export default function PaymentProcessing() {
                   <TableHead>Service</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Payment Method</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
+              <TableHead className="text-right">Amount</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -180,7 +180,7 @@ export default function PaymentProcessing() {
                         {booking.paymentMethod?.replace('-', ' ')}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right font-semibold">${booking.price}</TableCell>
+                    <TableCell className="text-right font-semibold">₹{booking.price}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -205,7 +205,7 @@ export default function PaymentProcessing() {
               </div>
               <div className="flex justify-between items-center mt-2">
                 <span className="text-sm text-muted-foreground">Amount Due</span>
-                <span className="text-2xl font-bold">${selectedBooking?.price}</span>
+                <span className="text-2xl font-bold">₹{selectedBooking?.price}</span>
               </div>
             </div>
 
