@@ -93,15 +93,14 @@ BEFORE INSERT ON bookings
 FOR EACH ROW
 EXECUTE FUNCTION set_booking_number();
 
--- Create admin table for phone OTP authentication (demo)
+-- Create admin table for phone password authentication (demo)
 CREATE TABLE IF NOT EXISTS admins (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     phone TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'admin' CHECK (role IN ('admin', 'superadmin')),
     is_active BOOLEAN DEFAULT true,
-    otp TEXT DEFAULT '123456',
-    otp_expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '10 minutes'),
+    password TEXT NOT NULL DEFAULT 'admin@Carhub',
     last_login TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -120,10 +119,10 @@ CREATE POLICY "Enable update access for service role only" ON admins FOR UPDATE 
 CREATE POLICY "Enable delete access for service role only" ON admins FOR DELETE USING (auth.role() = 'service_role');
 
 -- Insert sample admins for demo
-INSERT INTO admins (phone, name, role)
+INSERT INTO admins (phone, name, role, password)
 VALUES 
-  ('+1234567890', 'Demo Admin', 'admin'),
-  ('+1987654321', 'Super Admin', 'superadmin')
+  ('+1234567890', 'Demo Admin', 'admin', 'admin@Carhub'),
+  ('+1987654321', 'Super Admin', 'superadmin', 'admin@Carhub')
 ON CONFLICT (phone) DO NOTHING;
 
 

@@ -12,7 +12,7 @@ interface Admin {
 interface AuthContextType {
   admin: Admin | null;
   loading: boolean;
-  login: (phone: string, otp: string) => Promise<{ success: boolean; error?: string }>;
+  login: (phone: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -51,27 +51,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuth();
   }, []);
 
-  const login = async (phone: string, otp: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (phone: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       setLoading(true);
+
+      console.log('Attempting login with:', { phone, password });
 
       const { data, error } = await supabase
         .from('admins')
         .select('*')
         .eq('phone', phone)
-        .eq('otp', otp)
+        .eq('password', password)
         .eq('is_active', true)
         .single();
 
-      if (error || !data) {
-        return { success: false, error: 'Invalid phone number or OTP' };
+      console.log('Database response:', { data, error });
+
+      if (error) {
+        console.error('Database error:', error);
+        return { success: false, error: `Database error: ${error.message}` };
       }
 
-      const now = new Date();
-      const otpExpiresAt = new Date(data.otp_expires_at);
-
-      if (now > otpExpiresAt) {
-        return { success: false, error: 'OTP has expired' };
+      if (!data) {
+        console.log('No admin found with provided credentials');
+        return { success: false, error: 'Invalid phone number or password' };
       }
 
       const adminData: Admin = {
@@ -81,6 +84,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         role: data.role,
         is_active: data.is_active,
       };
+
+      console.log('Setting admin data:', adminData);
 
       setAdmin(adminData);
       localStorage.setItem('admin', JSON.stringify(adminData));
@@ -92,6 +97,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       return { success: true };
     } catch (error) {
+      console.error('Login error:', error);
       return { success: false, error: 'An error occurred during login' };
     } finally {
       setLoading(false);

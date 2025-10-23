@@ -9,7 +9,7 @@ import { Loader2, Sparkles, Phone, Shield } from 'lucide-react';
 
 export default function LoginPage() {
   const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -19,13 +19,13 @@ export default function LoginPage() {
     setError('');
     setIsLoading(true);
 
-    if (!phone || !otp) {
-      setError('Please enter both phone number and OTP');
+    if (!phone || !password) {
+      setError('Please enter both phone number and password');
       setIsLoading(false);
       return;
     }
 
-    const result = await login(phone, otp);
+    const result = await login(phone, password);
     
     if (!result.success) {
       setError(result.error || 'Login failed');
@@ -46,7 +46,7 @@ export default function LoginPage() {
               Admin Login
             </CardTitle>
             <CardDescription className="mt-2">
-              Enter your phone number and OTP to access the admin panel
+              Enter your phone number and password to access the admin panel
             </CardDescription>
           </div>
         </CardHeader>
@@ -70,16 +70,16 @@ export default function LoginPage() {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="otp" className="flex items-center gap-2">
+              <Label htmlFor="password" className="flex items-center gap-2">
                 <Shield className="h-4 w-4" />
-                OTP
+                Password
               </Label>
               <Input
-                id="otp"
-                type="text"
-                placeholder="123456"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
+                id="password"
+                type="password"
+                placeholder="admin@Carhub"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
                 required
               />
@@ -95,7 +95,7 @@ export default function LoginPage() {
               <p className="text-sm text-blue-800">
                 <strong>Demo Credentials:</strong><br />
                 Phone: <code className="bg-blue-100 px-1 rounded">+1234567890</code><br />
-                OTP: <code className="bg-blue-100 px-1 rounded">123456</code>
+                Password: <code className="bg-blue-100 px-1 rounded">admin@Carhub</code>
               </p>
             </div>
 
