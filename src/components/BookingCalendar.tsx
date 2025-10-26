@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { bookingService, customerService, vehicleService } from '@/lib/services';
 import { Booking, Customer, Vehicle } from '@/types';
-import { CalendarIcon, Clock, Plus, CreditCard, Wallet, Smartphone, Loader2, UserPlus, Car } from 'lucide-react';
+import { CalendarIcon, Clock, Plus, CreditCard, Wallet, Loader2, UserPlus, Car } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
 
@@ -20,17 +20,17 @@ const TIME_SLOTS = [
 ];
 
 const SERVICE_TYPES = [
-  { name: 'Basic Wash', price: 25 },
-  { name: 'Premium Wash', price: 45 },
-  { name: 'Deluxe Wash & Wax', price: 65 },
-  { name: 'Interior Detailing', price: 85 },
-  { name: 'Full Service', price: 120 },
+  'Basic Wash',
+  'Premium Wash', 
+  'Deluxe Wash & Wax',
+  'Interior Detailing',
+  'Full Service',
+  'Custom Service'
 ];
 
 const PAYMENT_METHODS = [
   { value: 'cash', label: 'Cash', icon: Wallet },
   { value: 'credit-card', label: 'Credit Card', icon: CreditCard },
-  { value: 'mobile-payment', label: 'Mobile Payment', icon: Smartphone },
 ];
 
 const STATUS_COLORS = {
@@ -58,6 +58,7 @@ export default function BookingCalendar() {
     customerId: '',
     vehicleId: '',
     serviceType: '',
+    customAmount: '',
     timeSlot: '',
     paymentMethod: '',
   });
@@ -114,9 +115,18 @@ export default function BookingCalendar() {
     
     const customer = customers.find(c => c.id === formData.customerId);
     const vehicle = vehicles.find(v => v.id === formData.vehicleId);
-    const service = SERVICE_TYPES.find(s => s.name === formData.serviceType);
     
-    if (!customer || !vehicle || !service) return;
+    if (!customer || !vehicle || !formData.serviceType || !formData.customAmount) return;
+
+    const amount = parseFloat(formData.customAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast({
+        title: 'Invalid Amount',
+        description: 'Please enter a valid amount greater than 0',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -126,18 +136,18 @@ export default function BookingCalendar() {
         vehicle_id: vehicle.id,
         customer_name: customer.name,
         vehicle_info: `${vehicle.make} ${vehicle.model} - ${vehicle.plate}`,
-        service_type: service.name,
+        service_type: formData.serviceType,
         date: selectedDate.toISOString(),
         time_slot: formData.timeSlot,
         status: formData.paymentMethod ? 'paid' : 'scheduled',
-        price: service.price,
+        price: amount,
         payment_method: formData.paymentMethod as Booking['payment_method'],
       });
 
       const updatedBookings = await bookingService.getAll();
       setBookings(updatedBookings);
       setIsDialogOpen(false);
-      setFormData({ customerId: '', vehicleId: '', serviceType: '', timeSlot: '', paymentMethod: '' });
+      setFormData({ customerId: '', vehicleId: '', serviceType: '', customAmount: '', timeSlot: '', paymentMethod: '' });
       
       toast({
         title: 'Booking Created',
@@ -267,7 +277,7 @@ export default function BookingCalendar() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Booking Calendar</h2>
-          <p className="text-muted-foreground">Schedule and manage Car Hub appointments</p>
+          <p className="text-muted-foreground">Schedule and manage Care Hub appointments</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -350,12 +360,23 @@ export default function BookingCalendar() {
                   </SelectTrigger>
                   <SelectContent>
                     {SERVICE_TYPES.map(service => (
-                      <SelectItem key={service.name} value={service.name}>
-                        {service.name} - ₹{service.price}
+                      <SelectItem key={service} value={service}>
+                        {service}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Amount (₹)</Label>
+                <Input
+                  type="number"
+                  placeholder="Enter amount"
+                  value={formData.customAmount}
+                  onChange={(e) => setFormData({ ...formData, customAmount: e.target.value })}
+                  min="0"
+                  step="0.01"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Time Slot</Label>

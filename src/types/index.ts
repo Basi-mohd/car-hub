@@ -3,6 +3,8 @@ export interface Customer {
   name: string;
   email: string;
   phone: string;
+  description?: string;
+  is_enquiry?: boolean;
   created_at: string;
 }
 

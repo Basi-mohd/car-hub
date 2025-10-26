@@ -4,11 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { customerService, vehicleService } from '@/lib/services';
 import { Customer, Vehicle } from '@/types';
-import { Plus, Search, Edit, Trash2, Car, Loader2, X } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Car, Loader2, X, FileText, MessageSquare } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function CustomerManagement() {
@@ -28,6 +30,8 @@ export default function CustomerManagement() {
     name: '',
     email: '',
     phone: '',
+    description: '',
+    is_enquiry: false,
   });
 
   const [vehicleDrafts, setVehicleDrafts] = useState<Array<{ make: string; model: string; plate: string; year: string; color: string }>>([
@@ -70,6 +74,8 @@ export default function CustomerManagement() {
       name: '',
       email: '',
       phone: '',
+      description: '',
+      is_enquiry: false,
     });
     setVehicleDrafts([{ make: '', model: '', plate: '', year: '', color: '' }]);
     setEditingCustomer(null);
@@ -136,6 +142,8 @@ export default function CustomerManagement() {
       name: customer.name,
       email: customer.email,
       phone: customer.phone,
+      description: customer.description || '',
+      is_enquiry: customer.is_enquiry || false,
     });
     setIsDialogOpen(true);
   };
@@ -240,7 +248,7 @@ export default function CustomerManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Customer Management</h2>
-          <p className="text-muted-foreground">Manage your Car Hub customers and their vehicles</p>
+          <p className="text-muted-foreground">Manage your Care Hub customers and their vehicles</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
@@ -289,6 +297,30 @@ export default function CustomerManagement() {
                     required
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Description
+                </Label>
+                <Textarea
+                  id="description"
+                  placeholder="Add customer description or notes..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={3}
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="is_enquiry"
+                  checked={formData.is_enquiry}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_enquiry: checked as boolean })}
+                />
+                <Label htmlFor="is_enquiry" className="flex items-center gap-2 text-sm font-normal">
+                  <MessageSquare className="h-4 w-4" />
+                  This is an enquiry (not an actual customer)
+                </Label>
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center justify-between">
@@ -389,6 +421,8 @@ export default function CustomerManagement() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Contact</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Vehicles</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -396,7 +430,7 @@ export default function CustomerManagement() {
               <TableBody>
                 {filteredCustomers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                       No customers found
                     </TableCell>
                   </TableRow>
@@ -411,6 +445,22 @@ export default function CustomerManagement() {
                             <div>{customer.email}</div>
                             <div className="text-muted-foreground">{customer.phone}</div>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="max-w-xs">
+                            {customer.description ? (
+                              <div className="text-sm text-muted-foreground line-clamp-2">
+                                {customer.description}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-sm italic">No description</span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={customer.is_enquiry ? "secondary" : "default"} className="text-xs">
+                            {customer.is_enquiry ? "Enquiry" : "Customer"}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <div className="space-y-2">

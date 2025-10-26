@@ -14,18 +14,26 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const { admin, logout } = useAuth();
 
+  const handleTabChange = (value: string) => {
+    if (value === 'admins' && admin?.role !== 'superadmin') {
+      setActiveTab('dashboard');
+    } else {
+      setActiveTab(value);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600">
-                <Sparkles className="h-6 w-6 text-white" />
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600">
+                <img src="/logo-notext.png" alt="Care Hub Logo" className="h-6 w-6" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  Car Hub Manager
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent">
+                  Care Hub Manager
                 </h1>
                 <p className="text-sm text-muted-foreground">Professional management system</p>
               </div>
@@ -50,8 +58,8 @@ export default function Home() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-[750px] h-auto p-1">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+          <TabsList className={`grid w-full ${admin?.role === 'superadmin' ? 'grid-cols-5' : 'grid-cols-4'} lg:w-[750px] h-auto p-1`}>
             <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -68,10 +76,12 @@ export default function Home() {
               <TableIcon className="h-4 w-4" />
               <span className="hidden sm:inline">All Bookings</span>
             </TabsTrigger>
-            <TabsTrigger value="admins" className="flex items-center gap-2 py-3">
-              <Shield className="h-4 w-4" />
-              <span className="hidden sm:inline">Admins</span>
-            </TabsTrigger>
+            {admin?.role === 'superadmin' && (
+              <TabsTrigger value="admins" className="flex items-center gap-2 py-3">
+                <Shield className="h-4 w-4" />
+                <span className="hidden sm:inline">Admins</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-4">
@@ -90,9 +100,11 @@ export default function Home() {
             <AllBookings />
           </TabsContent>
 
-          <TabsContent value="admins" className="space-y-4">
-            <AdminManagement />
-          </TabsContent>
+          {admin?.role === 'superadmin' && (
+            <TabsContent value="admins" className="space-y-4">
+              <AdminManagement />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
 

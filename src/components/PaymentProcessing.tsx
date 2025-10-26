@@ -8,13 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { bookingService } from '@/lib/services';
 import { Booking } from '@/types';
-import { CreditCard, Wallet, Smartphone, IndianRupee, CheckCircle2 } from 'lucide-react';
+import { CreditCard, Wallet, IndianRupee, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 const PAYMENT_METHODS = [
   { value: 'cash', label: 'Cash', icon: Wallet },
   { value: 'credit-card', label: 'Credit Card', icon: CreditCard },
-  { value: 'mobile-payment', label: 'Mobile Payment', icon: Smartphone },
 ];
 
 export default function PaymentProcessing() {

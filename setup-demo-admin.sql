@@ -1,4 +1,4 @@
--- Setup demo admin users for Car Hub
+-- Setup demo admin users for Care Hub
 -- Run this SQL in your Supabase SQL Editor
 -- IMPORTANT: Run migrate-to-password-auth.sql first to add the password column
 

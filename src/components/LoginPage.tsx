@@ -38,12 +38,12 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-4">
-          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 mx-auto">
-            <Sparkles className="h-8 w-8 text-white" />
+          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 mx-auto">
+            <img src="/logo-notext.png" alt="Care Hub Logo" className="h-10 w-10" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Admin Login
+            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent">
+              Care Hub Admin
             </CardTitle>
             <CardDescription className="mt-2">
               Enter your phone number and password to access the admin panel
@@ -61,7 +61,7 @@ export default function LoginPage() {
               <Input
                 id="phone"
                 type="tel"
-                placeholder="+1234567890"
+                placeholder="phone number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 disabled={isLoading}
@@ -77,7 +77,7 @@ export default function LoginPage() {
               <Input
                 id="password"
                 type="password"
-                placeholder="admin@Carhub"
+                placeholder="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
@@ -90,14 +90,6 @@ export default function LoginPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-sm text-blue-800">
-                <strong>Demo Credentials:</strong><br />
-                Phone: <code className="bg-blue-100 px-1 rounded">+1234567890</code><br />
-                Password: <code className="bg-blue-100 px-1 rounded">admin@Carhub</code>
-              </p>
-            </div>
 
             <Button 
               type="submit" 
