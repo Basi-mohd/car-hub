@@ -29,9 +29,9 @@ export interface Booking {
   service_type: string;
   date: string;
   time_slot: string;
-  status: 'scheduled' | 'in-progress' | 'completed' | 'paid';
+  status: 'in-progress' | 'completed' | 'paid';
   price: number;
-  payment_method?: 'cash' | 'credit-card' | 'mobile-payment';
+  payment_method?: 'cash' | 'bank' | 'mobile-payment';
 }
 
 export interface DailySummary {

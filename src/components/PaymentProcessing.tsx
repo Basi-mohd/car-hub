@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -17,32 +17,53 @@ const PAYMENT_METHODS = [
 ];
 
 export default function PaymentProcessing() {
-  const [bookings, setBookings] = useState<Booking[]>(bookingService.getAll());
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    const loadBookings = async () => {
+      try {
+        const allBookings = await bookingService.getAll();
+        setBookings(allBookings);
+      } catch (error) {
+        console.error('Failed to load bookings:', error);
+      }
+    };
+    loadBookings();
+  }, []);
+
   const pendingPayments = bookings.filter(b => b.status === 'completed');
   const paidBookings = bookings.filter(b => b.status === 'paid');
 
-  const handleProcessPayment = () => {
+  const handleProcessPayment = async () => {
     if (!selectedBooking || !paymentMethod) return;
 
-    bookingService.update(selectedBooking.id, {
-      status: 'paid',
-      paymentMethod: paymentMethod as Booking['paymentMethod'],
-    });
+    try {
+      await bookingService.update(selectedBooking.id, {
+        status: 'paid',
+        payment_method: paymentMethod as Booking['payment_method'],
+      });
 
-    setBookings(bookingService.getAll());
-    setIsDialogOpen(false);
-    setSelectedBooking(null);
-    setPaymentMethod('');
+      const updatedBookings = await bookingService.getAll();
+      setBookings(updatedBookings);
+      setIsDialogOpen(false);
+      setSelectedBooking(null);
+      setPaymentMethod('');
 
-    toast({
-      title: 'Payment Processed',
-      description: `Payment of ₹${selectedBooking.price} received via ${PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label}`,
-    });
+      toast({
+        title: 'Payment Processed',
+        description: `Payment of ₹${selectedBooking.price} received via ${PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label}`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to process payment. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const openPaymentDialog = (booking: Booking) => {
@@ -123,12 +144,12 @@ export default function PaymentProcessing() {
               <TableBody>
                 {pendingPayments.map((booking) => (
                   <TableRow key={booking.id}>
-                    <TableCell className="font-medium">{booking.customerName}</TableCell>
-                    <TableCell>{booking.serviceType}</TableCell>
+                    <TableCell className="font-medium">{booking.customer_name}</TableCell>
+                    <TableCell>{booking.service_type}</TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        <div>{booking.date.toLocaleDateString()}</div>
-                        <div className="text-muted-foreground">{booking.timeSlot}</div>
+                        <div>{new Date(booking.date).toLocaleDateString()}</div>
+                        <div className="text-muted-foreground">{booking.time_slot}</div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -171,12 +192,12 @@ export default function PaymentProcessing() {
               <TableBody>
                 {paidBookings.slice(0, 10).map((booking) => (
                   <TableRow key={booking.id}>
-                    <TableCell className="font-medium">{booking.customerName}</TableCell>
-                    <TableCell>{booking.serviceType}</TableCell>
-                    <TableCell>{booking.date.toLocaleDateString()}</TableCell>
+                    <TableCell className="font-medium">{booking.customer_name}</TableCell>
+                    <TableCell>{booking.service_type}</TableCell>
+                    <TableCell>{new Date(booking.date).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="capitalize">
-                        {booking.paymentMethod?.replace('-', ' ')}
+                        {booking.payment_method?.replace('-', ' ')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right font-semibold">₹{booking.price}</TableCell>
@@ -193,14 +214,14 @@ export default function PaymentProcessing() {
           <DialogHeader>
             <DialogTitle>Process Payment</DialogTitle>
             <DialogDescription>
-              Complete payment for {selectedBooking?.customerName}
+              Complete payment for {selectedBooking?.customer_name}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-6">
             <div className="bg-muted p-4 rounded-lg">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Service</span>
-                <span className="font-medium">{selectedBooking?.serviceType}</span>
+                <span className="font-medium">{selectedBooking?.service_type}</span>
               </div>
               <div className="flex justify-between items-center mt-2">
                 <span className="text-sm text-muted-foreground">Amount Due</span>

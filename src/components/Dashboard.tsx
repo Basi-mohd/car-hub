@@ -56,37 +56,37 @@ export default function Dashboard() {
     new Date(b.date).toDateString() === selectedDate.toDateString()
   );
 
-  const scheduledCount = todayBookings.filter(b => b.status === 'scheduled').length;
   const inProgressCount = todayBookings.filter(b => b.status === 'in-progress').length;
   const completedCount = todayBookings.filter(b => b.status === 'completed').length;
   const paidCount = todayBookings.filter(b => b.status === 'paid').length;
 
   const totalRevenue = bookings
-    .filter(b => b.status === 'paid')
+    .filter(b => b.status === 'paid' || b.status === 'completed')
     .reduce((sum, b) => sum + b.price, 0);
 
   const upcomingBookings = todayBookings
-    .filter(b => b.status === 'scheduled')
+    .filter(b => b.status === 'in-progress')
     .sort((a, b) => a.time_slot.localeCompare(b.time_slot))
     .slice(0, 5);
 
   const paidBookings = bookings.filter(b => b.status === 'paid');
-  const todayRevenue = paidBookings
+  const completedAndPaidBookings = bookings.filter(b => b.status === 'paid' || b.status === 'completed');
+  const todayRevenue = completedAndPaidBookings
     .filter(b => new Date(b.date).toDateString() === selectedDate.toDateString())
     .reduce((sum, b) => sum + b.price, 0);
 
   const monthStart = startOfMonth(selectedDate);
   const monthEnd = endOfMonth(selectedDate);
   const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  const monthlyRevenue = paidBookings
+  const monthlyRevenue = completedAndPaidBookings
     .filter(b => new Date(b.date) >= monthStart && new Date(b.date) <= monthEnd)
     .reduce((sum, b) => sum + b.price, 0);
-  const monthlyCount = paidBookings
+  const monthlyCount = completedAndPaidBookings
     .filter(b => new Date(b.date) >= monthStart && new Date(b.date) <= monthEnd).length;
 
   const last14Days = eachDayOfInterval({ start: subDays(selectedDate, 13), end: selectedDate });
   const last14Series = last14Days.map(d => {
-    const value = paidBookings
+    const value = completedAndPaidBookings
       .filter(b => isSameDay(new Date(b.date), d))
       .reduce((sum, b) => sum + b.price, 0);
     return { date: d, value };
@@ -128,7 +128,7 @@ export default function Dashboard() {
           <CardContent>
             <div className="text-2xl font-bold">₹{summary?.revenue || 0}</div>
             <p className="text-xs text-muted-foreground">
-              From {paidCount} paid service{paidCount !== 1 ? 's' : ''}
+              From {completedAndPaidBookings.filter(b => new Date(b.date).toDateString() === selectedDate.toDateString()).length} completed service{completedAndPaidBookings.filter(b => new Date(b.date).toDateString() === selectedDate.toDateString()).length !== 1 ? 's' : ''}
             </p>
           </CardContent>
         </Card>
@@ -175,7 +175,7 @@ export default function Dashboard() {
                 <CardContent>
                   <div className="text-2xl font-bold">₹{todayRevenue}</div>
                   <p className="text-xs text-muted-foreground">
-                    From paid bookings today
+                    From completed services today
                   </p>
                 </CardContent>
               </Card>
@@ -188,7 +188,7 @@ export default function Dashboard() {
                 <CardContent>
                   <div className="text-2xl font-bold">₹{monthlyRevenue}</div>
                   <p className="text-xs text-muted-foreground">
-                    {monthlyCount} paid bookings this month
+                    {monthlyCount} completed services this month
                   </p>
                 </CardContent>
               </Card>
@@ -223,7 +223,7 @@ export default function Dashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>14-Day Revenue Trend</CardTitle>
-                <CardDescription>Daily revenue from paid bookings</CardDescription>
+                <CardDescription>Daily revenue from completed services</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-end gap-1 h-32">
@@ -297,13 +297,6 @@ export default function Dashboard() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-blue-500" />
-                      <span className="text-sm font-medium">Scheduled</span>
-                    </div>
-                    <span className="text-2xl font-bold">{scheduledCount}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-yellow-500" />
                       <span className="text-sm font-medium">In Progress</span>
                     </div>
@@ -329,14 +322,14 @@ export default function Dashboard() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Upcoming Appointments</CardTitle>
-                <CardDescription>Next scheduled services</CardDescription>
+                <CardTitle>Active Services</CardTitle>
+                <CardDescription>Services currently in progress</CardDescription>
               </CardHeader>
               <CardContent>
                 {upcomingBookings.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>No upcoming appointments</p>
+                    <p>No active services</p>
                   </div>
                 ) : (
                   <div className="space-y-3">

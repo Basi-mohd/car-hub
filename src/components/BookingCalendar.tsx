@@ -7,11 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { bookingService, customerService, vehicleService } from '@/lib/services';
 import { Booking, Customer, Vehicle } from '@/types';
-import { CalendarIcon, Clock, Plus, CreditCard, Wallet, Loader2, UserPlus, Car } from 'lucide-react';
+import { CalendarIcon, Clock, Plus, CreditCard, Wallet, Loader2, UserPlus, Car, Check, ChevronsUpDown, Building2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const TIME_SLOTS = [
   '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM',
@@ -30,11 +33,10 @@ const SERVICE_TYPES = [
 
 const PAYMENT_METHODS = [
   { value: 'cash', label: 'Cash', icon: Wallet },
-  { value: 'credit-card', label: 'Credit Card', icon: CreditCard },
+  { value: 'bank', label: 'Bank', icon: Building2 },
 ];
 
 const STATUS_COLORS = {
-  'scheduled': 'bg-blue-500',
   'in-progress': 'bg-yellow-500',
   'completed': 'bg-green-500',
   'paid': 'bg-emerald-500',
@@ -52,6 +54,9 @@ export default function BookingCalendar() {
   const [submitting, setSubmitting] = useState(false);
   const [customerSubmitting, setCustomerSubmitting] = useState(false);
   const [vehicleSubmitting, setVehicleSubmitting] = useState(false);
+  const [customerComboboxOpen, setCustomerComboboxOpen] = useState(false);
+  const [serviceComboboxOpen, setServiceComboboxOpen] = useState(false);
+  const [customerSearchQuery, setCustomerSearchQuery] = useState('');
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -139,7 +144,7 @@ export default function BookingCalendar() {
         service_type: formData.serviceType,
         date: selectedDate.toISOString(),
         time_slot: formData.timeSlot,
-        status: formData.paymentMethod ? 'paid' : 'scheduled',
+        status: formData.paymentMethod ? 'paid' : 'in-progress',
         price: amount,
         payment_method: formData.paymentMethod as Booking['payment_method'],
       });
@@ -151,7 +156,7 @@ export default function BookingCalendar() {
       
       toast({
         title: 'Booking Created',
-        description: `Appointment scheduled for ${customer.name} at ${formData.timeSlot}`,
+        description: `Service started for ${customer.name} at ${formData.timeSlot}`,
       });
     } catch (error) {
       toast({
@@ -185,12 +190,61 @@ export default function BookingCalendar() {
   const handleCustomerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate required fields
+    if (!customerFormData.name.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Full name is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!customerFormData.email.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Email is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!customerFormData.phone.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Phone number is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(customerFormData.email)) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please enter a valid email address',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     try {
       setCustomerSubmitting(true);
       
-      const newCustomer = await customerService.create(customerFormData);
+      // Create customer without vehicle fields
+      const customerData = {
+        name: customerFormData.name,
+        email: customerFormData.email,
+        phone: customerFormData.phone,
+        description: '',
+        is_enquiry: false,
+      };
+      
+      const newCustomer = await customerService.create(customerData);
       setCustomers(prev => [newCustomer, ...prev]);
       
+      // Create vehicle separately if vehicle information is provided
       if (customerFormData.vehicle_make && customerFormData.vehicle_model && customerFormData.vehicle_plate) {
         const newVehicle = await vehicleService.create({
           customer_id: newCustomer.id,
@@ -296,30 +350,70 @@ export default function BookingCalendar() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label>Customer</Label>
-                <Select value={formData.customerId} onValueChange={(value) => {
-                  if (value === 'add-customer') {
-                    setIsCustomerDialogOpen(true);
-                  } else {
-                    setFormData({ ...formData, customerId: value });
-                  }
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select customer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers.map(customer => (
-                      <SelectItem key={customer.id} value={customer.id}>
-                        {customer.name} - {customer.vehicle_plate}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="add-customer" className="text-primary">
-                      <div className="flex items-center gap-2">
-                        <UserPlus className="h-4 w-4" />
-                        Add New Customer
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <Popover open={customerComboboxOpen} onOpenChange={setCustomerComboboxOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={customerComboboxOpen}
+                      className="w-full justify-between"
+                    >
+                      {formData.customerId
+                        ? customers.find(c => c.id === formData.customerId)?.name || 'Select customer'
+                        : 'Select customer'}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-0" align="start" style={{ width: 'var(--radix-popover-trigger-width)' }}>
+                    <Command>
+                      <CommandInput placeholder="Search customer..." value={customerSearchQuery} onValueChange={setCustomerSearchQuery} />
+                      <CommandList>
+                        <CommandEmpty>No customer found.</CommandEmpty>
+                        <CommandGroup>
+                          {customers
+                            .filter(customer => 
+                              customer.name.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
+                              customer.email.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
+                              customer.phone.toLowerCase().includes(customerSearchQuery.toLowerCase())
+                            )
+                            .map(customer => (
+                            <CommandItem
+                              key={customer.id}
+                              value={customer.id}
+                              onSelect={() => {
+                                setFormData({ ...formData, customerId: customer.id });
+                                setCustomerComboboxOpen(false);
+                                setCustomerSearchQuery('');
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  formData.customerId === customer.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <div className="flex flex-col">
+                                <span>{customer.name}</span>
+                                <span className="text-xs text-muted-foreground">{customer.email} · {customer.phone}</span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                          <CommandItem
+                            value="add-customer"
+                            onSelect={() => {
+                              setCustomerComboboxOpen(false);
+                              setIsCustomerDialogOpen(true);
+                            }}
+                            className="text-primary"
+                          >
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            Add New Customer
+                          </CommandItem>
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               {formData.customerId && (
                 <div className="space-y-2">
@@ -354,18 +448,11 @@ export default function BookingCalendar() {
               )}
               <div className="space-y-2">
                 <Label>Service Type</Label>
-                <Select value={formData.serviceType} onValueChange={(value) => setFormData({ ...formData, serviceType: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select service" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SERVICE_TYPES.map(service => (
-                      <SelectItem key={service} value={service}>
-                        {service}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  placeholder="Enter service type"
+                  value={formData.serviceType}
+                  onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Amount (₹)</Label>
@@ -395,7 +482,7 @@ export default function BookingCalendar() {
               </div>
               <div className="space-y-2">
                 <Label>Payment Method (Optional)</Label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   {PAYMENT_METHODS.map((method) => {
                     const Icon = method.icon;
                     return (
@@ -453,7 +540,7 @@ export default function BookingCalendar() {
           <CardHeader>
             <CardTitle>Appointments for {format(selectedDate, 'MMMM d, yyyy')}</CardTitle>
             <CardDescription>
-              {dayBookings.length} booking{dayBookings.length !== 1 ? 's' : ''} scheduled
+              {dayBookings.length} booking{dayBookings.length !== 1 ? 's' : ''} for today
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -504,7 +591,6 @@ export default function BookingCalendar() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="scheduled">Scheduled</SelectItem>
                               <SelectItem value="in-progress">In Progress</SelectItem>
                               <SelectItem value="completed">Completed</SelectItem>
                               <SelectItem value="paid">Paid</SelectItem>
@@ -530,7 +616,7 @@ export default function BookingCalendar() {
           </DialogHeader>
           <form onSubmit={handleCustomerSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="customer-name">Full Name</Label>
+              <Label htmlFor="customer-name">Full Name *</Label>
               <Input
                 id="customer-name"
                 value={customerFormData.name}
@@ -540,7 +626,7 @@ export default function BookingCalendar() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="customer-email">Email</Label>
+                <Label htmlFor="customer-email">Email *</Label>
                 <Input
                   id="customer-email"
                   type="email"
@@ -550,7 +636,7 @@ export default function BookingCalendar() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="customer-phone">Phone</Label>
+                <Label htmlFor="customer-phone">Phone *</Label>
                 <Input
                   id="customer-phone"
                   value={customerFormData.phone}
@@ -566,13 +652,13 @@ export default function BookingCalendar() {
               </Label>
               <div className="grid grid-cols-2 gap-4">
                 <Input
-                  placeholder="Make (e.g., Toyota)"
+                  placeholder="Make (e.g., Toyota) *"
                   value={customerFormData.vehicle_make}
                   onChange={(e) => setCustomerFormData({ ...customerFormData, vehicle_make: e.target.value })}
                   required
                 />
                 <Input
-                  placeholder="Model (e.g., Camry)"
+                  placeholder="Model (e.g., Camry) *"
                   value={customerFormData.vehicle_model}
                   onChange={(e) => setCustomerFormData({ ...customerFormData, vehicle_model: e.target.value })}
                   required
@@ -580,7 +666,7 @@ export default function BookingCalendar() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="customer-plate">License Plate</Label>
+              <Label htmlFor="customer-plate">License Plate *</Label>
               <Input
                 id="customer-plate"
                 value={customerFormData.vehicle_plate}

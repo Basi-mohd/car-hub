@@ -237,7 +237,7 @@ export const bookingService = {
         b.status === 'completed' || b.status === 'paid'
       ).length,
       revenue: dayBookings
-        .filter(b => b.status === 'paid')
+        .filter(b => b.status === 'paid' || b.status === 'completed')
         .reduce((sum, b) => sum + b.price, 0),
     };
   },

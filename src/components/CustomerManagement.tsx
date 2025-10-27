@@ -84,6 +84,75 @@ export default function CustomerManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate required fields
+    if (!formData.name.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Full name is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!formData.email.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Email is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!formData.phone.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Phone number is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please enter a valid email address',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Validate vehicle data if provided
+    for (const v of vehicleDrafts) {
+      if (v.make || v.model || v.plate) {
+        if (!v.make.trim()) {
+          toast({
+            title: 'Validation Error',
+            description: 'Vehicle make is required when adding vehicle information',
+            variant: 'destructive',
+          });
+          return;
+        }
+        if (!v.model.trim()) {
+          toast({
+            title: 'Validation Error',
+            description: 'Vehicle model is required when adding vehicle information',
+            variant: 'destructive',
+          });
+          return;
+        }
+        if (!v.plate.trim()) {
+          toast({
+            title: 'Validation Error',
+            description: 'Vehicle license plate is required when adding vehicle information',
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+    }
+    
     try {
       setSubmitting(true);
       
@@ -201,6 +270,34 @@ export default function CustomerManagement() {
     
     if (!selectedCustomerForVehicle) return;
 
+    // Validate vehicle form data
+    if (!vehicleModalFormData.make.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Vehicle make is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!vehicleModalFormData.model.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Vehicle model is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!vehicleModalFormData.plate.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Vehicle license plate is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       setVehicleSubmitting(true);
       
@@ -269,7 +366,7 @@ export default function CustomerManagement() {
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name">Full Name *</Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -279,7 +376,7 @@ export default function CustomerManagement() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email *</Label>
                   <Input
                     id="email"
                     type="email"
@@ -289,7 +386,7 @@ export default function CustomerManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="phone">Phone *</Label>
                   <Input
                     id="phone"
                     value={formData.phone}
@@ -342,24 +439,24 @@ export default function CustomerManagement() {
                 <div className="space-y-3">
                   {vehicleDrafts.map((v, idx) => (
                     <div key={idx} className="grid grid-cols-12 gap-2 items-center">
-                      <Input
-                        placeholder="Make"
-                        value={v.make}
-                        onChange={(e) => setVehicleDrafts((prev) => prev.map((row, i) => i === idx ? { ...row, make: e.target.value } : row))}
-                        className="col-span-3"
-                      />
-                      <Input
-                        placeholder="Model"
-                        value={v.model}
-                        onChange={(e) => setVehicleDrafts((prev) => prev.map((row, i) => i === idx ? { ...row, model: e.target.value } : row))}
-                        className="col-span-3"
-                      />
-                      <Input
-                        placeholder="Plate"
-                        value={v.plate}
-                        onChange={(e) => setVehicleDrafts((prev) => prev.map((row, i) => i === idx ? { ...row, plate: e.target.value.toUpperCase() } : row))}
-                        className="col-span-3"
-                      />
+                <Input
+                  placeholder="Make *"
+                  value={v.make}
+                  onChange={(e) => setVehicleDrafts((prev) => prev.map((row, i) => i === idx ? { ...row, make: e.target.value } : row))}
+                  className="col-span-3"
+                />
+                <Input
+                  placeholder="Model *"
+                  value={v.model}
+                  onChange={(e) => setVehicleDrafts((prev) => prev.map((row, i) => i === idx ? { ...row, model: e.target.value } : row))}
+                  className="col-span-3"
+                />
+                <Input
+                  placeholder="Plate *"
+                  value={v.plate}
+                  onChange={(e) => setVehicleDrafts((prev) => prev.map((row, i) => i === idx ? { ...row, plate: e.target.value.toUpperCase() } : row))}
+                  className="col-span-3"
+                />
                       <Input
                         placeholder="Year"
                         type="number"
@@ -544,13 +641,13 @@ export default function CustomerManagement() {
               </Label>
               <div className="grid grid-cols-2 gap-4">
                 <Input
-                  placeholder="Make (e.g., Toyota)"
+                  placeholder="Make (e.g., Toyota) *"
                   value={vehicleModalFormData.make}
                   onChange={(e) => setVehicleModalFormData({ ...vehicleModalFormData, make: e.target.value })}
                   required
                 />
                 <Input
-                  placeholder="Model (e.g., Camry)"
+                  placeholder="Model (e.g., Camry) *"
                   value={vehicleModalFormData.model}
                   onChange={(e) => setVehicleModalFormData({ ...vehicleModalFormData, model: e.target.value })}
                   required
@@ -558,7 +655,7 @@ export default function CustomerManagement() {
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <Input
-                  placeholder="License Plate"
+                  placeholder="License Plate *"
                   value={vehicleModalFormData.plate}
                   onChange={(e) => setVehicleModalFormData({ ...vehicleModalFormData, plate: e.target.value.toUpperCase() })}
                   required
