@@ -200,15 +200,6 @@ export default function BookingCalendar() {
       return;
     }
     
-    if (!customerFormData.email.trim()) {
-      toast({
-        title: 'Validation Error',
-        description: 'Email is required',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
     if (!customerFormData.phone.trim()) {
       toast({
         title: 'Validation Error',
@@ -218,15 +209,16 @@ export default function BookingCalendar() {
       return;
     }
     
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(customerFormData.email)) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please enter a valid email address',
-        variant: 'destructive',
-      });
-      return;
+    if (customerFormData.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(customerFormData.email)) {
+        toast({
+          title: 'Validation Error',
+          description: 'Please enter a valid email address',
+          variant: 'destructive',
+        });
+        return;
+      }
     }
     
     try {
@@ -235,7 +227,7 @@ export default function BookingCalendar() {
       // Create customer without vehicle fields
       const customerData = {
         name: customerFormData.name,
-        email: customerFormData.email,
+        email: customerFormData.email.trim() || undefined,
         phone: customerFormData.phone,
         description: '',
         is_enquiry: false,
@@ -373,7 +365,7 @@ export default function BookingCalendar() {
                           {customers
                             .filter(customer => 
                               customer.name.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
-                              customer.email.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
+                              (customer.email && customer.email.toLowerCase().includes(customerSearchQuery.toLowerCase())) ||
                               customer.phone.toLowerCase().includes(customerSearchQuery.toLowerCase())
                             )
                             .map(customer => (
@@ -394,7 +386,9 @@ export default function BookingCalendar() {
                               />
                               <div className="flex flex-col">
                                 <span>{customer.name}</span>
-                                <span className="text-xs text-muted-foreground">{customer.email} · {customer.phone}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {customer.email ? `${customer.email} · ` : ''}{customer.phone}
+                                </span>
                               </div>
                             </CommandItem>
                           ))}
@@ -626,13 +620,12 @@ export default function BookingCalendar() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="customer-email">Email *</Label>
+                <Label htmlFor="customer-email">Email</Label>
                 <Input
                   id="customer-email"
                   type="email"
                   value={customerFormData.email}
                   onChange={(e) => setCustomerFormData({ ...customerFormData, email: e.target.value })}
-                  required
                 />
               </div>
               <div className="space-y-2">

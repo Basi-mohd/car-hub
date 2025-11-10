@@ -94,15 +94,6 @@ export default function CustomerManagement() {
       return;
     }
     
-    if (!formData.email.trim()) {
-      toast({
-        title: 'Validation Error',
-        description: 'Email is required',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
     if (!formData.phone.trim()) {
       toast({
         title: 'Validation Error',
@@ -112,15 +103,16 @@ export default function CustomerManagement() {
       return;
     }
     
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please enter a valid email address',
-        variant: 'destructive',
-      });
-      return;
+    if (formData.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        toast({
+          title: 'Validation Error',
+          description: 'Please enter a valid email address',
+          variant: 'destructive',
+        });
+        return;
+      }
     }
     
     // Validate vehicle data if provided
@@ -157,15 +149,19 @@ export default function CustomerManagement() {
       setSubmitting(true);
       
       let customerId: string;
+      const customerData = {
+        ...formData,
+        email: formData.email.trim() || undefined,
+      };
       if (editingCustomer) {
-        await customerService.update(editingCustomer.id, formData);
+        await customerService.update(editingCustomer.id, customerData);
         customerId = editingCustomer.id;
         toast({
           title: 'Customer Updated',
           description: 'Customer information has been updated successfully.',
         });
       } else {
-        const newCustomer = await customerService.create(formData);
+        const newCustomer = await customerService.create(customerData);
         customerId = newCustomer.id;
         toast({
           title: 'Customer Added',
@@ -336,7 +332,7 @@ export default function CustomerManagement() {
     const vehiclePlates = customerVehicles.map(v => v.plate).join(' ');
     
     return customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
            vehiclePlates.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
@@ -376,13 +372,12 @@ export default function CustomerManagement() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -539,7 +534,7 @@ export default function CustomerManagement() {
                         <TableCell className="font-medium">{customer.name}</TableCell>
                         <TableCell>
                           <div className="text-sm">
-                            <div>{customer.email}</div>
+                            {customer.email && <div>{customer.email}</div>}
                             <div className="text-muted-foreground">{customer.phone}</div>
                           </div>
                         </TableCell>
